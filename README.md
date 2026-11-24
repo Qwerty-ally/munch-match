@@ -4,4 +4,4 @@ A 2000s magazine-style yes/no quiz that helps a group of friends decide lunch: w
 
 Live version (saves answers for the group): https://claude.ai/artifact/CdyxQEezWPno3LNXmgnXDH
 
-Opening `index.html` on its own works for taking the quiz, but answers are only saved and shared when it runs on claude.ai.
+The GitHub Pages version saves answers to Firebase: https://qwerty-ally.github.io/munch-match/

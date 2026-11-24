@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <title>Munch Match</title>
@@ -423,6 +425,21 @@ h3.sec{font-family:var(--display);font-weight:400;font-size:26px;margin:0 0 10px
         if(state.view!=="quiz")render(); else foot.textContent="Answers save to the crew's shared results";
       },function(){clearTimeout(timer);dbStatus="off";render();});
     }).catch(function(){dbStatus="off";render();});
+  } else if(window.firebase){
+    // Standalone (GitHub Pages): save answers to Firebase Firestore
+    try{
+      firebase.initializeApp({apiKey:"AIzaSyDO6veuNTr37FicDyBdtg-LhzPTzZSsc28",authDomain:"munch-match-finn.firebaseapp.com",projectId:"munch-match-finn",appId:"1:549515767325:web:b754603dfd32ece05420f4"});
+      db=firebase.firestore();
+      try{uid=localStorage.getItem("mm-id");}catch(e){}
+      if(!uid){uid="p"+Math.random().toString(36).slice(2,12)+Date.now().toString(36);try{localStorage.setItem("mm-id",uid)}catch(e){}}
+      var ftimer=setTimeout(function(){if(dbStatus==="connecting"){dbStatus="off";render();}},10000);
+      db.collection("responses").onSnapshot(function(snap){
+        responses=snap.docs.map(function(d){var x=d.data();return {id:d.id,name:String(x.name||""),answers:x.answers||{},order:{},at:x.at,raw:x}});
+        clearTimeout(ftimer);dbStatus="ok";
+        if(state.view!=="quiz")render(); else foot.textContent="Answers save to the crew's shared results";
+      },function(){clearTimeout(ftimer);dbStatus="off";render();});
+      render();
+    }catch(e){dbStatus="off";render();}
   } else {dbStatus="off";render();}
 })();
 </script>
