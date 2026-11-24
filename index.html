@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Munch Match</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Nunito:wght@600;800;900&family=Space+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: a single 2000-era teen-mag quiz page — masthead, one big question card, YES/NO flowchart arrows, stickers. Deliberately single-look (bright paper), both host themes. */
+:root{
+  --paper:#fff4fb;
+  --dots:#ffc6e5;
+  --ink:#2a0a3d;
+  --pink:#ff2e93;
+  --cyan:#1fc8ff;
+  --sun:#ffe44d;
+  --lilac:#b98cff;
+  --white:#ffffff;
+  --muted:#7a4f8f;
+  --display:"Shrikhand","Cooper Black","Georgia",serif;
+  --body:"Nunito","Trebuchet MS",system-ui,sans-serif;
+  --mono:"Space Mono","Courier New",monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background-color:var(--paper);
+  background-image:radial-gradient(var(--dots) 1.6px,transparent 1.7px);
+  background-size:14px 14px;
+  color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 48px;
+}
+.wrap{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* masthead */
+.mast{position:relative;text-align:left;padding-top:6px}
+.mast .issue{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;border-bottom:3px solid var(--ink);padding-bottom:4px;flex-wrap:wrap}
+.mast h1{font-family:var(--display);font-weight:400;font-size:clamp(48px,13vw,84px);line-height:.95;margin:10px 0 0;color:var(--pink);
+  text-shadow:4px 4px 0 var(--cyan),8px 8px 0 var(--ink);letter-spacing:-.01em;transform:rotate(-2deg);transform-origin:left}
+.mast .tag{font-weight:900;text-transform:uppercase;letter-spacing:.06em;font-size:13px;margin-top:14px;background:var(--ink);color:var(--sun);display:inline-block;padding:3px 10px;transform:rotate(1deg)}
+
+/* card */
+.card{background:var(--white);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:28px 22px 24px;position:relative}
+.card.pinkish{background:linear-gradient(160deg,var(--white) 60%,#ffe2f1)}
+.kicker{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+.q{font-family:var(--display);font-weight:400;font-size:clamp(28px,7vw,40px);line-height:1.08;margin:8px 0 6px;text-wrap:balance}
+.hint{color:var(--muted);font-weight:700;margin:0 0 20px}
+
+.burst{position:absolute;top:-30px;right:-14px;width:96px;height:96px;background:var(--sun);display:grid;place-items:center;text-align:center;
+  clip-path:polygon(50% 0%,61% 15%,79% 7%,80% 26%,98% 30%,88% 47%,100% 62%,81% 69%,82% 89%,63% 84%,50% 100%,37% 84%,18% 89%,19% 69%,0% 62%,12% 47%,2% 30%,20% 26%,21% 7%,39% 15%);
+  font-weight:900;font-size:12px;line-height:1.05;text-transform:uppercase;transform:rotate(12deg);color:var(--ink)}
+.burst span{display:block;width:62px}
+
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.btn{font-family:var(--display);font-size:28px;border:3px solid var(--ink);padding:14px 10px;cursor:pointer;box-shadow:5px 5px 0 var(--ink);
+  transition:transform .08s,box-shadow .08s;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:10px}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.btn:focus-visible,.small:focus-visible,input:focus-visible{outline:3px dashed var(--pink);outline-offset:3px}
+.yes{background:var(--cyan)}
+.no{background:var(--pink);color:var(--white)}
+.arrow{font-family:var(--body);font-weight:900;font-size:22px}
+.go{background:var(--sun);width:100%}
+.small{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--white);border:2px solid var(--ink);padding:6px 10px;cursor:pointer;color:var(--ink)}
+.small:hover{background:var(--sun)}
+.small.danger{border-color:var(--pink);color:var(--pink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+
+label{font-weight:900;text-transform:uppercase;letter-spacing:.06em;font-size:13px;display:block;margin-bottom:6px}
+.err{color:var(--pink);font-weight:700;margin:-8px 0 14px;min-height:1em}
+select,input[type=text]{width:100%;font:800 20px var(--body);padding:12px 14px;border:3px solid var(--ink);background:var(--paper);color:var(--ink);margin-bottom:18px}
+
+.progress{display:flex;gap:6px;margin-top:18px;flex-wrap:wrap}
+.progress i{width:14px;height:14px;border:2px solid var(--ink);border-radius:50%;background:var(--white)}
+.progress i.on{background:var(--pink)}
+
+/* done */
+.done h2{font-family:var(--display);font-weight:400;font-size:clamp(46px,13vw,78px);line-height:1;margin:6px 0 10px;color:var(--cyan);text-shadow:4px 4px 0 var(--ink);transform:rotate(-3deg)}
+.result{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.chip{font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:.04em;border:2px solid var(--ink);padding:4px 10px;background:var(--sun)}
+.chip.c{background:var(--cyan)} .chip.p{background:var(--pink);color:var(--white)} .chip.l{background:var(--lilac)}
+.note{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+/* admin */
+.planname{font-family:var(--display);font-weight:400;font-size:clamp(30px,8vw,46px);line-height:1.05;margin:6px 0 4px;color:var(--pink);text-wrap:balance}
+.steps{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.steps li{display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:baseline;border-top:2px dashed var(--ink);padding-top:10px}
+.steps b{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tallies{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tally{border:2px solid var(--ink);padding:10px 12px;background:var(--paper)}
+.tally h4{margin:0 0 6px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+.bar{display:grid;grid-template-columns:1fr auto;gap:8px;font-weight:800;font-size:14px;align-items:center;margin-top:4px}
+.bar .track{grid-column:1/-1;height:8px;background:var(--white);border:1.5px solid var(--ink)}
+.bar .fill{height:100%;background:var(--pink)}
+.people{display:flex;flex-direction:column;gap:10px}
+.person{border:2px solid var(--ink);padding:10px 12px;background:var(--white);display:flex;flex-direction:column;gap:6px}
+.person .who{font-weight:900;font-size:18px}
+.person .chips{display:flex;flex-wrap:wrap;gap:6px}
+.person .chip{font-size:11px;padding:2px 8px}
+.warn{background:var(--sun);border:2px solid var(--ink);padding:8px 12px;font-weight:800;margin-top:12px}
+h3.sec{font-family:var(--display);font-weight:400;font-size:26px;margin:0 0 10px}
+.foot{font-family:var(--mono);font-size:11px;text-align:center;color:var(--muted);letter-spacing:.06em}
+@media (max-width:420px){.btn{font-size:24px}.card{padding:24px 16px 20px}.burst{width:80px;height:80px;right:-6px}.burst span{width:54px}}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
+.pop{animation:pop .28s ease-out}
+@keyframes pop{from{transform:scale(.96) rotate(-1deg)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="issue"><span>Vol. 1 · Lunch Issue</span><span>Lunch Planner</span><span>50¢</span></div>
+    <h1>Munch Match</h1>
+    <div class="tag">Lunch quiz for the group</div>
+  </header>
+  <main id="app"></main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+(function(){
+  // ---------- Quiz flowchart: every NO leads somewhere different than YES ----------
+  var Q = {
+    time:{type:"time",q:"What time do you want to eat lunch?",hint:"Pick from the menu or type a time.",go:"house"},
+    house:{q:"Do you want to go out for lunch?",hint:"Yes = go somewhere. No = stay in.",
+      yes:{set:{mode:"out"},go:"served"}, no:{go:"sweats"}},
+    sweats:{q:"Do you want to stay home and order Grubhub?",hint:"No = you'd consider going out.",
+      yes:{set:{mode:"doordash"},go:null}, no:{go:"ride"}},
+    ride:{q:"Would you go out if everyone else does?",hint:"No = order Grubhub.",
+      yes:{set:{mode:"out"},go:"served"}, no:{set:{mode:"doordash"},go:null}},
+    served:{q:"Do you want a sit-down restaurant?",hint:"No = counter service or a grocery store.",
+      yes:{set:{place:"restaurant",style:"sit-down"},go:null}, no:{go:"aisles"}},
+    aisles:{q:"Do you want to go to a grocery store?",hint:"No = a quick counter-service restaurant.",
+      yes:{set:{place:"grocery"},go:"picnic"}, no:{set:{place:"restaurant",style:"counter"},go:null}},
+    picnic:{q:"Do you want to eat outside?",hint:"No = eat at someone's place.",
+      yes:{set:{eatAt:"picnic"},go:null}, no:{set:{eatAt:"someone's place"},go:null}}
+  };
+  var STICKERS=["Yes or no","Yes or no","Yes or no","Yes or no","Almost done","Almost done","Last one","Last one"];
+
+  var app=document.getElementById("app"), foot=document.getElementById("foot");
+  var state={view:"start",name:"",part:1,node:"time",answers:{},path:[],hist:[]};
+  function parseTime(s){
+    s=String(s==null?"":s).trim().toLowerCase().replace(/\./g,"");
+    if(s==="noon")return 720;
+    var m=s.match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm|a|p)?$/); if(!m)return null;
+    var hh=+m[1],mm=m[2]?+m[2]:0; if(mm>59||hh>23)return null;
+    var ap=m[3];
+    if(ap){if(hh>12||hh===0)return null; if(ap[0]==="p"&&hh<12)hh+=12; if(ap[0]==="a"&&hh===12)hh=0;}
+    else if(hh>=1&&hh<=6)hh+=12;
+    return hh*60+mm;
+  }
+  function fmtTime(min){var hh=Math.floor(min/60)%24,mm=min%60,ap=hh>=12?"PM":"AM",h12=hh%12||12;return h12+":"+(mm<10?"0":"")+mm+" "+ap;}
+  var db=null,uid=null,user=null,isOwner=false,responses=[],unsub=null,dbStatus="connecting";
+  try{var saved=localStorage.getItem("mm-name"); if(saved) state.name=saved;}catch(e){}
+
+  function h(tag,attrs,kids){var el=document.createElement(tag);attrs=attrs||{};
+    for(var k in attrs){if(k==="class")el.className=attrs[k];else if(k==="text")el.textContent=attrs[k];else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),attrs[k]);else el.setAttribute(k,attrs[k]);}
+    (kids||[]).forEach(function(c){if(c)el.appendChild(typeof c==="string"?document.createTextNode(c):c)});return el;}
+
+  function render(){
+    app.innerHTML="";
+    var v=state.view;
+    if(v==="start")app.appendChild(startView());
+    else if(v==="quiz")app.appendChild(quizView());
+    else if(v==="done")app.appendChild(doneView());
+    else if(v==="admin")app.appendChild(adminView());
+    foot.textContent = dbStatus==="ok" ? "Answers save to the crew's shared results" :
+      dbStatus==="off" ? "Saving is off here — open this page signed in to claude.ai to send your answers" : "Connecting…";
+  }
+
+  function startView(){
+    var input=h("input",{type:"text",id:"name",placeholder:"e.g. Jess",maxlength:"30",autocomplete:"off"});
+    input.value=state.name;
+    function begin(part){part=part===2?2:1;var n=input.value.trim(); if(!n){input.focus();input.placeholder="Enter your name first";return;}
+      state.name=n; try{localStorage.setItem("mm-name",n)}catch(e){}
+      state.part=part;state.view="quiz";state.node=part===2?"hot":"time";state.answers={};state.path=[];state.hist=[];render();}
+    input.addEventListener("keydown",function(e){if(e.key==="Enter")begin(1);});
+    var card=h("section",{class:"card pinkish pop"},[
+      h("div",{class:"burst"},[h("span",{text:"7 Qs max"})]),
+      h("div",{class:"kicker",text:"Take the quiz"}),
+      h("p",{class:"q",text:"Plan today's lunch"}),
+      h("p",{class:"hint",text:"Answer each question. Your answers are combined with everyone else's into one lunch plan."}),
+      h("label",{for:"name",text:"Your name"}),input,
+      h("button",{class:"btn go",onclick:function(){begin(1)}},["Start the quiz ",h("span",{class:"arrow",text:"→"})]),
+      h("div",{class:"row",style:"margin-top:18px"},[
+        h("span",{class:"note",text:responses.length?responses.length+" friend"+(responses.length===1?"":"s")+" answered so far":"No answers yet"}),
+        h("button",{class:"small",onclick:function(){state.view="admin";render();}},["★ Admin"])
+      ])
+    ]);
+    return card;
+  }
+
+  function quizView(){
+    var node=Q[state.node], n=state.path.length;
+    function goBack(){
+      if(!state.hist.length){state.view="start";render();return;}
+      var p=state.hist.pop();state.path.pop();state.node=p.node;state.answers=p.answers;render();}
+    if(node.type==="time"){
+      var sel=h("select",{id:"time-select"});
+      sel.appendChild(h("option",{value:"",text:"Choose a time…"}));
+      for(var t=11*60;t<=14*60+30;t+=30)sel.appendChild(h("option",{value:fmtTime(t),text:fmtTime(t)}));
+      var txt=h("input",{type:"text",id:"time-type",placeholder:"e.g. 12:45 or 1pm",maxlength:"12",autocomplete:"off"});
+      var err=h("p",{class:"note err",text:""});
+      sel.addEventListener("change",function(){if(sel.value)txt.value="";err.textContent="";});
+      txt.addEventListener("input",function(){if(txt.value)sel.value="";err.textContent="";});
+      function next(){
+        var raw=txt.value.trim()||sel.value;
+        if(!raw){err.textContent="Pick a time from the menu or type one in.";return;}
+        var m=parseTime(raw);
+        if(m===null){err.textContent="Enter a time like 12:30 or 1pm.";txt.focus();return;}
+        state.hist.push({node:state.node,answers:JSON.parse(JSON.stringify(state.answers))});
+        state.path.push({q:node.q,a:fmtTime(m)});
+        state.answers.time=fmtTime(m);state.answers.timeMin=m;
+        state.node=node.go;render();
+      }
+      txt.addEventListener("keydown",function(e){if(e.key==="Enter")next();});
+      return h("section",{class:"card pop"},[
+        h("div",{class:"burst"},[h("span",{text:"Pick a time"})]),
+        h("div",{class:"kicker",text:"Question #"+(n+1)}),
+        h("p",{class:"q",text:node.q}),
+        h("p",{class:"hint",text:node.hint}),
+        h("label",{for:"time-select",text:"Pick from the menu"}),sel,
+        h("label",{for:"time-type",text:"…or type your own"}),txt,
+        err,
+        h("button",{class:"btn go",onclick:next},["Next ",h("span",{class:"arrow",text:"→"})]),
+        h("div",{class:"row",style:"margin-top:18px"},[h("span"),h("button",{class:"small",onclick:goBack},["← Back"])])
+      ]);
+    }
+    function pick(isYes){
+      var br=isYes?node.yes:node.no;
+      state.hist.push({node:state.node,answers:JSON.parse(JSON.stringify(state.answers))});
+      state.path.push({q:node.q,a:isYes?"Yes":"No"});
+      if(br.set)for(var k in br.set)state.answers[k]=br.set[k];
+      if(br.go){state.node=br.go;render();}else finish();
+    }
+    var dots=h("div",{class:"progress","aria-hidden":"true"});
+    for(var i=0;i<=n;i++)dots.appendChild(h("i",{class:i<=n?"on":""}));
+    return h("section",{class:"card pop"},[
+      h("div",{class:"burst"},[h("span",{text:STICKERS[n%STICKERS.length]})]),
+      h("div",{class:"kicker",text:"Question #"+(n+1)}),
+      h("p",{class:"q",text:node.q}),
+      h("p",{class:"hint",text:node.hint}),
+      h("div",{class:"choices"},[
+        h("button",{class:"btn yes",onclick:function(){pick(true)}},["YES ",h("span",{class:"arrow",text:"→"})]),
+        h("button",{class:"btn no",onclick:function(){pick(false)}},["NO ",h("span",{class:"arrow",text:"→"})])
+      ]),
+      h("div",{class:"row",style:"margin-top:18px"},[
+        dots,
+        h("button",{class:"small",onclick:goBack},["← Back"])
+      ])
+    ]);
+  }
+
+  var saveMsg="";
+  function finish(){
+    state.view="done";saveMsg=db&&uid?"Sending your answers…":"Couldn't save here — open this page signed in to claude.ai.";
+    render();
+    if(db&&uid){
+      var mine=responses.filter(function(r){return r.id===uid})[0];
+      var doc=mine?JSON.parse(JSON.stringify(mine.raw)):{};
+      doc.name=state.name;doc.at=new Date().toISOString();
+      if(state.part===2){doc.order=state.answers;doc.path2=state.path;if(!doc.answers)doc.answers={};}
+      else{doc.answers=state.answers;doc.path=state.path;}
+      db.collection("responses").doc(uid).set(doc)
+        .then(function(){saveMsg="Saved! Your answers are in the crew results.";if(state.view==="done")render();})
+        .catch(function(e){saveMsg=e&&e.code==="invalid_argument"?"Couldn't save: ask whoever shared this to give you Contributor access.":"Couldn't save right now. Try again in a minute.";if(state.view==="done")render();});
+    }
+  }
+
+  function chipsFor(a){
+    var out=[];
+    if(a.time)out.push(["Lunch at "+a.time,""]);
+    if(a.mode==="doordash")out.push(["Grubhub","p"]);
+    if(a.mode==="out")out.push(["Going out","c"]);
+    if(a.place==="restaurant")out.push([a.style==="sit-down"?"Sit-down restaurant":"Quick counter spot","l"]);
+    if(a.place==="grocery")out.push(["Grocery run","l"]);
+    if(a.eatAt)out.push(["Eat: "+a.eatAt,""]);
+    if(a.food)out.push(["Get: "+a.food,"p"]);
+    if(a.drink)out.push(["Drink: "+a.drink,a.drink==="Water"?"":"c"]);
+    if(a.budget)out.push(["Budget "+a.budget,""]);
+    if(a.driver===true)out.push(["Can drive","c"]);
+    if(a.split===true)out.push(["Splits the fee","p"]);
+    if(a.split===false)out.push(["Won't split fee",""]);
+    return out;
+  }
+
+  function doneView(){
+    var res=h("div",{class:"result"});
+    chipsFor(state.answers).forEach(function(c){res.appendChild(h("span",{class:"chip "+c[1],text:c[0]}))});
+    return h("section",{class:"card done pop"},[
+      h("div",{class:"burst"},[h("span",{text:"Finished"})]),
+      h("div",{class:"kicker",text:"Results for "+state.name}),
+      h("h2",{text:"OK ALL DONE!"}),
+      h("p",{class:"hint",text:"Your answers:"}),res,
+      h("p",{class:"note",text:saveMsg}),
+      h("div",{class:"row",style:"margin-top:14px"},[
+        h("button",{class:"small",onclick:function(){state.view="start";render();}},["↺ Retake"]),
+        h("button",{class:"small",onclick:function(){state.view="admin";render();}},["★ See crew plan"])
+      ])
+    ]);
+  }
+
+  // ---------- Admin: summarize + make the plan ----------
+  function count(list,key){var c={};list.forEach(function(a){var v=a[key];if(v!==undefined&&v!==null)c[v]=(c[v]||0)+1});return c;}
+  function top(c,order){var best=null,bv=-1;(order||Object.keys(c)).forEach(function(k){if((c[k]||0)>bv){bv=c[k]||0;best=k}});return bv>0?best:null;}
+
+  function buildPlan(rows){
+    var A=rows.map(function(r){return r.answers||{}});
+    var mode=count(A,"mode"), times={};
+    A.forEach(function(a){var m=typeof a.timeMin==="number"?a.timeMin:parseTime(a.time);if(m!==null&&m>=0&&m<1440)times[m]=(times[m]||0)+1;});
+    var timeKeys=Object.keys(times).map(Number).sort(function(x,y){return x-y}).map(String);
+    var timeLabels={};timeKeys.forEach(function(k){timeLabels[k]=fmtTime(+k)});
+    var outA=A.filter(function(a){return a.mode==="out"});
+    var place=count(outA,"place"), style=count(outA.filter(function(a){return a.place==="restaurant"}),"style");
+    var budget=count(outA,"budget"), eat=count(outA.filter(function(a){return a.place==="grocery"}),"eatAt");
+    var winMode=top(mode,["out","doordash"]); // tie goes to getting out of the house
+    var winKey=top(times,timeKeys); // tie goes to the earliest (hungriest) time
+    var winMin=winKey===null?null:+winKey;
+    var winTime=winMin===null?null:fmtTime(winMin);
+    var winPlace=top(place,["restaurant","grocery"]);
+    var winStyle=top(style,["counter","sit-down"]);
+    var winBudget=top(budget,["$","$$"]);
+    var winEat=top(eat,["picnic","someone's place"]);
+    var drivers=rows.filter(function(r){return r.answers&&r.answers.driver===true}).map(function(r){return r.name});
+    var splitters=rows.filter(function(r){return r.answers&&r.answers.split===true}).map(function(r){return r.name});
+
+    var timeWord=winMin===null?"Lunchtime":winMin<720?"Early Bird":winMin<780?"High Noon":"Fashionably Late";
+    var core, what;
+    if(winMode==="doordash"){core="Doorbell Feast";what="Order Grubhub to one place and eat together";}
+    else if(winPlace==="grocery"){core=winEat==="picnic"?"Aisle Raid Picnic":"Aisle Raid";what="Hit the grocery store together, grab stuff, then eat "+(winEat==="picnic"?"outside, picnic style":"at someone's place");}
+    else if(winStyle==="sit-down"){core="Booth Squad";what="Sit-down restaurant with table service";}
+    else {core="Grab-n-Go Gang";what="Quick counter-service spot";}
+    var name="Operation "+timeWord+" "+core;
+
+    var steps=[["When",winTime?winTime+" lunch":"Pick a time — nobody answered yet"],["What",what]];
+    var warns=[];
+    if(winMode==="out"){
+      steps.push(["How","Walk there together. Pick somewhere close."]);
+      steps.push(["Check in","Tell a parent where you're going."]);
+      var stay=rows.filter(function(r){return r.answers&&r.answers.mode==="doordash"}).map(function(r){return r.name});
+      if(stay.length)warns.push(stay.join(", ")+" voted to stay in.");
+    } else if(winMode==="doordash"){
+      steps.push(["Who orders","Ask a parent to place the order."]);
+      steps.push(["Order by",winMin!==null?fmtTime(Math.max(0,winMin-40))+" so it shows up on time":"40 min before lunch"]);
+    }
+    return {name:name,steps:steps,warns:warns,tallies:{mode:mode,times:times,timeLabels:timeLabels,place:place,style:style,budget:budget},winMode:winMode,count:rows.length};
+  }
+
+  function tallyBox(title,c,labels){
+    var total=0;for(var k in c)total+=c[k];
+    var box=h("div",{class:"tally"},[h("h4",{text:title})]);
+    Object.keys(labels).forEach(function(k){var n=c[k]||0;
+      var fill=h("div",{class:"fill"});fill.style.width=(total?Math.round(n/total*100):0)+"%";
+      box.appendChild(h("div",{class:"bar"},[h("span",{text:labels[k]}),h("span",{text:String(n)}),h("div",{class:"track"},[fill])]));});
+    if(!total)box.appendChild(h("div",{class:"note",text:"No votes"}));
+    return box;
+  }
+
+  var pendingDelete=null;
+  function adminView(){
+    var wrap=h("div",{class:"wrap",style:"gap:20px"});
+    var back=h("div",{class:"row"},[h("button",{class:"small",onclick:function(){state.view="start";render();}},["← Back to quiz"]),
+      h("span",{class:"note",text:responses.length+" response"+(responses.length===1?"":"s")})]);
+    wrap.appendChild(back);
+    if(!db){wrap.appendChild(h("section",{class:"card"},[h("p",{class:"hint",text:dbStatus==="connecting"?"Loading the crew's answers…":"The crew's answers can't load here. Open this page signed in to claude.ai."})]));return wrap;}
+    if(!responses.length){wrap.appendChild(h("section",{class:"card pop"},[h("div",{class:"kicker",text:"The plan"}),h("p",{class:"q",text:"Nobody's taken the quiz yet."}),h("p",{class:"hint",text:"Send the link to your friends. The plan appears here once answers come in."})]));return wrap;}
+    var P=buildPlan(responses);
+    var steps=h("ul",{class:"steps"});
+    P.steps.forEach(function(s){steps.appendChild(h("li",{},[h("b",{text:s[0]}),h("span",{text:s[1]})]))});
+    var planCard=h("section",{class:"card pinkish pop"},[
+      h("div",{class:"burst"},[h("span",{text:"Final plan"})]),
+      h("div",{class:"kicker",text:"Today's master plan · "+P.count+" vote"+(P.count===1?"":"s")}),
+      h("p",{class:"planname",text:P.name}),steps]);
+    P.warns.forEach(function(w){planCard.appendChild(h("div",{class:"warn",text:"⚠ "+w}))});
+    wrap.appendChild(planCard);
+
+    var t=P.tallies;
+    wrap.appendChild(h("section",{class:"card"},[h("h3",{class:"sec",text:"The tally"}),h("div",{class:"tallies"},[
+      tallyBox("In or out",t.mode,{out:"Go out",doordash:"Grubhub"}),
+      tallyBox("Lunch time",t.times,t.timeLabels),
+      tallyBox("If going out",t.place,{restaurant:"Restaurant",grocery:"Grocery"}),
+      tallyBox("Restaurant style",t.style,{"sit-down":"Sit-down",counter:"Counter"})
+    ])]));
+
+    var people=h("div",{class:"people"});
+    responses.forEach(function(r){
+      var cs=h("div",{class:"chips"});chipsFor(Object.assign({},r.answers,r.order)).forEach(function(c){cs.appendChild(h("span",{class:"chip "+c[1],text:c[0]}))});
+      var top=h("div",{class:"row"},[h("span",{class:"who",text:r.name||"Someone"})]);
+      if(isOwner){
+        var confirming=pendingDelete===r.id;
+        top.appendChild(h("button",{class:"small danger",onclick:function(){
+          if(!confirming){pendingDelete=r.id;render();return;}
+          pendingDelete=null;db.collection("responses").doc(r.id).delete().catch(function(){});
+        }},[confirming?"Tap again to remove":"Remove"]));
+      }
+      people.appendChild(h("div",{class:"person"},[top,cs]));
+    });
+    wrap.appendChild(h("section",{class:"card"},[h("h3",{class:"sec",text:"Who said what"}),people]));
+    return wrap;
+  }
+
+  render();
+
+  // ---------- Shared storage ----------
+  if(window.claude&&window.claude.use){
+    Promise.all([window.claude.use("db"),window.claude.use("user")]).then(function(res){
+      db=res[0];user=res[1];
+      if(!db){dbStatus="off";render();return;}
+      var timer=setTimeout(function(){if(dbStatus==="connecting"){dbStatus="off";render();}},10000);
+      (user?user.id():Promise.resolve(null)).then(function(id){uid=id;render();});
+      if(user)user.isOwner().then(function(o){isOwner=!!o;render();}).catch(function(){});
+      unsub=db.collection("responses").onSnapshot(function(snap){
+        responses=snap.docs.filter(function(d){return d.exists}).map(function(d){var x=d.data();return {id:d.id,name:String(x.name||""),answers:x.answers||{},order:x.order||{},at:x.at,raw:x}});
+        if(!snap.metadata.fromCache){clearTimeout(timer);}
+        dbStatus="ok";
+        if(state.view!=="quiz")render(); else foot.textContent="Answers save to the crew's shared results";
+      },function(){clearTimeout(timer);dbStatus="off";render();});
+    }).catch(function(){dbStatus="off";render();});
+  } else {dbStatus="off";render();}
+})();
+</script>
+
+</body>
+</html>
